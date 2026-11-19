@@ -18,6 +18,9 @@ and experimental support for newer macOS releases. Keep upstream attribution.
   This test-only package exercises production logic without launching Ice.
 - Use fake applications for relaunch tests. Never quit real applications in tests.
 - Compilation-only products are not signed installation artifacts.
+- See `FORK.md` for pinned dependency resolution and the complete build command.
+  Xcode's `-packageCachePath` must be absolute; a relative path can silently leave
+  package products unresolved.
 
 ## Workflow
 

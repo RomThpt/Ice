@@ -1,3 +1,9 @@
+> This is the **RomThpt/Ice local development fork**, with experimental macOS 27
+> support. See [FORK.md](FORK.md) for source attribution, verification and current
+> limitations. The upstream download and Homebrew instructions below install the
+> original distribution, not this fork. This fork has no signed release yet and
+> does not use the upstream automatic update channel.
+
 <div align="center">
     <img src="Ice/Assets.xcassets/AppIcon.appiconset/icon_256x256.png" width=200 height=200>
     <h1>Ice</h1>
