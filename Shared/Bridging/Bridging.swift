@@ -117,13 +117,21 @@ extension Bridging {
             logger.error("CGSCopyActiveMenuBarDisplayIdentifier returned nil")
             return nil
         }
-        guard let uuid = CFUUIDCreateFromString(nil, string.takeRetainedValue()) else {
-            logger.error("CFUUIDCreateFromString returned nil")
-            return nil
+        let identifier = string.takeRetainedValue() as String
+        let displayID = MenuBarDisplayIdentifier.resolve(
+            identifier,
+            mainDisplayID: CGMainDisplayID(),
+            activeDisplayIDs: getActiveDisplayList()
+        ) { displayID in
+            guard let uuid = getDisplayUUID(for: displayID) else {
+                return nil
+            }
+            return UUID(uuidString: CFUUIDCreateString(nil, uuid) as String)
         }
-        return getActiveDisplayList().first { displayID in
-            getDisplayUUID(for: displayID) == uuid
+        if displayID == nil {
+            logger.error("Could not resolve the active menu bar display identifier")
         }
+        return displayID
     }
 }
 

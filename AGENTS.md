@@ -43,4 +43,6 @@ and experimental support for newer macOS releases. Keep upstream attribution.
   Keep updates disabled until this fork has its own signed release channel.
 - macOS 27 concealment uses private APIs; local ad-hoc signing is insufficient for
   some allowlist behavior. Passing pure unit tests cannot establish UI compatibility.
+- WindowServer's active menu bar display identifier can be `Main`, not only a UUID.
+  Resolve it against the active display list; do not fall back for unknown identifiers.
 - Store generated investigation notes in `.Codex/rules/`, not in this file.

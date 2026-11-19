@@ -7,6 +7,17 @@ let package = Package(
     platforms: [.macOS(.v14)],
     targets: [
         .target(
+            name: "IceDisplay",
+            path: "Shared/Utilities/Displays",
+            swiftSettings: [.swiftLanguageMode(.v5)]
+        ),
+        .testTarget(
+            name: "IceDisplayTests",
+            dependencies: ["IceDisplay"],
+            path: "Tests/IceDisplayTests",
+            swiftSettings: [.swiftLanguageMode(.v5)]
+        ),
+        .target(
             name: "IceMacOS27Core",
             path: "Ice/MenuBar/MacOS27/Core",
             swiftSettings: [.swiftLanguageMode(.v5)]
