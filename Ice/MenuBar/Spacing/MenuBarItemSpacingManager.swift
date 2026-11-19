@@ -4,7 +4,6 @@
 //
 
 import Cocoa
-import Combine
 
 /// Manager for menu bar item spacing.
 @MainActor
@@ -35,9 +34,6 @@ final class MenuBarItemSpacingManager {
             "You may need to log out for the changes to take effect."
         }
     }
-
-    /// Delay before force terminating an app.
-    private let forceTerminateDelay = 1
 
     /// The offset to apply to the default spacing and padding.
     /// Does not take effect until ``applyOffset()`` is called.
@@ -82,31 +78,10 @@ final class MenuBarItemSpacingManager {
             Logger.spacing.debug("Signaling application \"\(logString(for: app))\" to quit")
         }
 
-        app.terminate()
-
-        var cancellable: AnyCancellable?
-        return try await withCheckedThrowingContinuation { continuation in
-            let timeoutTask = Task {
-                try await Task.sleep(for: .seconds(forceTerminateDelay))
-                if !app.isTerminated {
-                    Logger.spacing.debug("Application \"\(logString(for: app))\" did not terminate within \(forceTerminateDelay) seconds, attempting to force terminate")
-                    app.forceTerminate()
-                }
-            }
-
-            cancellable = app.publisher(for: \.isTerminated).sink { [weak self] isTerminated in
-                guard
-                    let self,
-                    isTerminated
-                else {
-                    return
-                }
-                timeoutTask.cancel()
-                cancellable?.cancel()
-                Logger.spacing.debug("Application \"\(logString(for: app))\" terminated successfully")
-                continuation.resume()
-            }
-        }
+        try await ApplicationTermination.request(
+            isTerminated: { app.isTerminated },
+            terminate: { app.terminate() }
+        )
     }
 
     /// Asynchronously launches the app at the given URL.
@@ -166,7 +141,7 @@ final class MenuBarItemSpacingManager {
                     app.bundleIdentifier != "com.apple.controlcenter", // ControlCenter handles its own relaunch, so skip it.
                     app != .current
                 else {
-                    break
+                    continue
                 }
                 group.addTask { @MainActor in
                     do {
