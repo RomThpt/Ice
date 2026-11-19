@@ -7,6 +7,17 @@ let package = Package(
     platforms: [.macOS(.v14)],
     targets: [
         .target(
+            name: "IceMacOS27Core",
+            path: "Ice/MenuBar/MacOS27/Core",
+            swiftSettings: [.swiftLanguageMode(.v5)]
+        ),
+        .testTarget(
+            name: "IceMacOS27CoreTests",
+            dependencies: ["IceMacOS27Core"],
+            path: "Tests/IceMacOS27CoreTests",
+            swiftSettings: [.swiftLanguageMode(.v5)]
+        ),
+        .target(
             name: "IceApplicationLifecycle",
             path: "Ice/Utilities/ApplicationLifecycle",
             swiftSettings: [.swiftLanguageMode(.v5)]

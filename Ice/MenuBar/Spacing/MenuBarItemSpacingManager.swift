@@ -4,6 +4,7 @@
 //
 
 import Cocoa
+import OSLog
 
 /// Manager for menu bar item spacing.
 @MainActor
@@ -35,6 +36,9 @@ final class MenuBarItemSpacingManager {
         }
     }
 
+    /// Logger for the menu bar item spacing manager.
+    private let logger = Logger(category: "MenuBarItemSpacingManager")
+
     /// The offset to apply to the default spacing and padding.
     /// Does not take effect until ``applyOffset()`` is called.
     var offset = 0
@@ -64,18 +68,13 @@ final class MenuBarItemSpacingManager {
         try await runCommand("defaults", with: ["-currentHost", "write", "-globalDomain", key.rawValue, "-int", String(key.defaultValue + offset)])
     }
 
-    /// Returns a log string for the given app.
-    private nonisolated func logString(for app: NSRunningApplication) -> String {
-        app.localizedName ?? app.bundleIdentifier ?? "<NIL>"
-    }
-
     /// Asynchronously signals the given app to quit.
     private func signalAppToQuit(_ app: NSRunningApplication) async throws {
         if app.isTerminated {
-            Logger.spacing.debug("Application \"\(logString(for: app))\" is already terminated")
+            logger.debug("Application \"\(app.logString, privacy: .public)\" is already terminated")
             return
         } else {
-            Logger.spacing.debug("Signaling application \"\(logString(for: app))\" to quit")
+            logger.debug("Signaling application \"\(app.logString, privacy: .public)\" to quit")
         }
 
         try await ApplicationTermination.request(
@@ -87,7 +86,7 @@ final class MenuBarItemSpacingManager {
     /// Asynchronously launches the app at the given URL.
     private nonisolated func launchApp(at applicationURL: URL, bundleIdentifier: String) async throws {
         if let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == bundleIdentifier }) {
-            Logger.spacing.debug("Application \"\(logString(for: app))\" is already open, so skipping launch")
+            logger.debug("Application \"\(app.logString, privacy: .public)\" is already open, so skipping launch")
             return
         }
         let configuration = NSWorkspace.OpenConfiguration()
@@ -129,8 +128,12 @@ final class MenuBarItemSpacingManager {
 
         try? await Task.sleep(for: .milliseconds(100))
 
-        let items = MenuBarItem.getMenuBarItems(onScreenOnly: false, activeSpaceOnly: true)
-        let pids = Set(items.map { $0.ownerPID })
+        // On macOS 27 this lists only the applications that publish an item, so an application
+        // whose item is concealed is not here and is not relaunched: its items keep the old
+        // spacing until it is restarted for some other reason. Decided 2026-11-04 — force
+        // quitting a hidden Slack or Telegram costs the user more than an even bar does.
+        let items = await MenuBarItem.getMenuBarItems(option: .activeSpace)
+        let pids = Set(items.map { $0.sourcePID ?? $0.ownerPID })
 
         var failedApps = [String]()
 
@@ -141,6 +144,11 @@ final class MenuBarItemSpacingManager {
                     app.bundleIdentifier != "com.apple.controlcenter", // ControlCenter handles its own relaunch, so skip it.
                     app != .current
                 else {
+                    // `continue`, not `break`: `pids` is a `Set`, so the order is unspecified,
+                    // and breaking out here stopped the whole walk at whichever position Control
+                    // Center or Ice happened to take. The applications after them were never
+                    // relaunched and kept the old spacing, which on macOS 27 is every time —
+                    // Ice's own item is always in the list there.
                     continue
                 }
                 group.addTask { @MainActor in
@@ -184,7 +192,9 @@ final class MenuBarItemSpacingManager {
     }
 }
 
-// MARK: - Logger
-private extension Logger {
-    static let spacing = Logger(category: "Spacing")
+private extension NSRunningApplication {
+    /// A string to use for logging purposes.
+    var logString: String {
+        localizedName ?? bundleIdentifier ?? "<NIL>"
+    }
 }
