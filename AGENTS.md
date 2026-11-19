@@ -14,8 +14,8 @@ and experimental support for newer macOS releases. Keep upstream attribution.
   copy into Applications, launch Ice, change permissions or alter the live menu bar.
 - Run SwiftLint using `.swiftlint.yml`. Keep downloaded verification tools under
   ignored `build/tools`; do not commit binaries or generated Xcode output.
-- Run any branch-provided Swift package tests before committing code changes.
-  The original main branch has no test target.
+- Run `swift test --scratch-path build/tests` before committing code changes.
+  This test-only package exercises production logic without launching Ice.
 - Use fake applications for relaunch tests. Never quit real applications in tests.
 - Compilation-only products are not signed installation artifacts.
 

@@ -1,0 +1,21 @@
+// swift-tools-version:6.0
+import PackageDescription
+
+// Test-only package; these production files also belong to the Ice Xcode target.
+let package = Package(
+    name: "IceCore",
+    platforms: [.macOS(.v14)],
+    targets: [
+        .target(
+            name: "IceApplicationLifecycle",
+            path: "Ice/Utilities/ApplicationLifecycle",
+            swiftSettings: [.swiftLanguageMode(.v5)]
+        ),
+        .testTarget(
+            name: "IceApplicationLifecycleTests",
+            dependencies: ["IceApplicationLifecycle"],
+            path: "Tests/IceApplicationLifecycleTests",
+            swiftSettings: [.swiftLanguageMode(.v5)]
+        ),
+    ]
+)
